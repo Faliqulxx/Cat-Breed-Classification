@@ -2,6 +2,7 @@ import os
 os.environ["TF_USE_LEGACY_KERAS"] = "1"
 import io
 import numpy as np
+import urllib.request
 from PIL import Image
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -44,7 +45,15 @@ except FileNotFoundError:
 MODELS_DIR = "models"
 
 def get_model_path(filename):
-    return os.path.join(MODELS_DIR, filename)
+    filepath = os.path.join(MODELS_DIR, filename)
+    # If the file is an LFS pointer (< 1KB) or missing, download it directly from GitHub raw LFS media
+    if not os.path.exists(filepath) or os.path.getsize(filepath) < 1024:
+        print(f"File {filepath} is an LFS pointer or missing. Downloading from GitHub...")
+        url = f"https://media.githubusercontent.com/media/Faliqulxx/Cat-Breed-Classification/main/backend/models/{filename}"
+        os.makedirs(MODELS_DIR, exist_ok=True)
+        urllib.request.urlretrieve(url, filepath)
+        print(f"Downloaded {filename} successfully.")
+    return filepath
 
 print("Loading models...")
 try:
