@@ -3,7 +3,7 @@ import axios from 'axios';
 import { UploadCloud, Image as ImageIcon, Loader2, Info, ChevronRight, BarChart3, Settings2, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = 'https://uapmachinelearning-production.up.railway.app';
+const API_URL = 'https://cat-breed-classification-production.up.railway.app';
 
 const CAT_BREEDS_INFO = [
   { id: "abyssinian", name: "Abyssinian", desc: "Diyakini berasal dari pesisir Samudra Hindia atau Mesir Kuno. Mitosnya, ras ini merupakan keturunan langsung dari kucing suci yang dipuja oleh para Firaun.", emoji: "🐈", image: "/cat_breeds/Abyssinian.jpg" },
