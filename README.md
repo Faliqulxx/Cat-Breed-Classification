@@ -8,7 +8,7 @@ Sistem mampu mengklasifikasikan gambar kucing ke dalam **12 ras kucing** dengan 
 2. **MobileNetV2 (Transfer Learning)**  
 3. **ResNet50 (Transfer Learning)**  
 
-Selain pelatihan model, proyek ini dilengkapi dengan **dashboard berbasis Streamlit** yang memungkinkan pengguna melakukan prediksi ras kucing secara interaktif melalui website.
+Selain pelatihan model, proyek ini dilengkapi dengan **dashboard modern berbasis React, Vite, dan Tailwind CSS** serta **FastAPI** sebagai backend untuk melakukan prediksi ras kucing secara interaktif melalui website.
 
 ---
 
@@ -228,12 +228,13 @@ Sebaliknya, CNN Scratch mengalami overfitting, sedangkan ResNet50 menunjukkan pe
 ---
 
 ## 🌐 Dashboard Website
-Aplikasi web dikembangkan menggunakan **Streamlit** dengan fitur:
-- Pemilihan model klasifikasi
-- Upload gambar kucing
-- Prediksi ras kucing
-- Confidence score
-- Tabel probabilitas seluruh kelas
+Aplikasi web dikembangkan menggunakan arsitektur modern (Frontend: **React + Vite + Tailwind CSS**, Backend: **FastAPI**) dengan fitur:
+- Antarmuka (UI) interaktif bertema kucing yang responsif.
+- Animasi mulus menggunakan Framer Motion.
+- Pemilihan model klasifikasi secara dinamis.
+- Upload gambar kucing secara langsung.
+- Hasil prediksi ras kucing beserta nilai Confidence Score (%).
+- Tabel probabilitas prediksi yang disortir dari yang tertinggi.
 
 ---
 
@@ -244,39 +245,53 @@ Aplikasi web dikembangkan menggunakan **Streamlit** dengan fitur:
 git clone https://github.com/username/cat-breed-classification.git
 cd cat-breed-classification
 ```
-### 2️⃣ Buat Virtual Environment
+
+### 2️⃣ Jalankan Backend (FastAPI)
+Buka terminal baru, masuk ke direktori backend, dan jalankan server:
 ```bash
+cd backend
 python -m venv venv
 venv\Scripts\activate
-```
-### 3️⃣ Install Dependencies
-```bash
 pip install -r requirements.txt
+uvicorn api:app --reload
 ```
-### 4️⃣ Jalankan Aplikasi Streamlit
+API akan berjalan di `http://127.0.0.1:8000`.
+
+### 3️⃣ Jalankan Frontend (React + Vite)
+Buka terminal baru lainnya, masuk ke direktori frontend, dan jalankan server *development*:
 ```bash
-streamlit run dashboard/app.py
+cd frontend
+npm install
+npm run dev
 ```
+Buka URL localhost yang diberikan oleh Vite (biasanya `http://localhost:5173`) di browser Anda.
+
 ## 📁 Struktur Folder
 
 ```
 cat-breed-classification/
 │
-├── dashboard/
-│   └── app.py
+├── backend/
+│   ├── api.py
+│   ├── requirements.txt
+│   └── venv/
+│
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── index.css
+│   │   └── ...
+│   ├── public/
+│   │   └── cat_breeds/
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── ...
 │
 ├── models/
 │   ├── cnn_scratch_cat_breed_final.keras
 │   ├── mobilenetv2_cat_breed_final.keras
 │   └── resnet50_cat_breed_final.keras
 │
-├── sample_images/
-│   ├── abyssinian.jpg
-│   ├── bengal.jpg
-│   └── ...
-│
 ├── labels.txt
-├── requirements.txt
 └── README.md
-
 ```
