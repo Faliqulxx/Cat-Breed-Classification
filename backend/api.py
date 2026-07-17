@@ -41,7 +41,7 @@ except FileNotFoundError:
 # Since we are in the backend directory, paths should be relative to it, or parent if models are in root.
 # In the original app.py, models were loaded from "models/...".
 # Let's check where the models folder is. The list_dir showed models in e:\UAP_Machine_Learning\models
-MODELS_DIR = "../models"
+MODELS_DIR = "models"
 
 def get_model_path(filename):
     return os.path.join(MODELS_DIR, filename)
