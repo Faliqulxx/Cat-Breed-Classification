@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 python-multipart
-tensorflow
-tf_keras
-keras
+tensorflow==2.16.1
+tf_keras==2.16.0
+keras==3.3.3
 numpy
 pillow
 gdown

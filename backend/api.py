@@ -55,17 +55,80 @@ def get_model_path(filename):
         print(f"Downloaded {filename} successfully.")
     return filepath
 
+def load_model_safely(name, filepath):
+    """
+    Try to load a model. If it fails (e.g. because it was saved with native
+    Keras 3 but we're forcing the legacy tf_keras shim, or vice versa),
+    retry once with compile=False and, if that still fails, retry using the
+    other Keras implementation before giving up on this specific model.
+    """
+    # Attempt 1: normal load
+    try:
+        model = keras.models.load_model(filepath)
+        print(f"[OK] {name} loaded successfully.")
+        return model
+    except Exception as e1:
+        print(f"[WARN] {name} failed to load normally: {e1}")
+
+    # Attempt 2: load without compiling (sometimes avoids optimizer/metric
+    # deserialization issues that mask the real weight-loading problem)
+    try:
+        model = keras.models.load_model(filepath, compile=False)
+        print(f"[OK] {name} loaded successfully with compile=False.")
+        return model
+    except Exception as e2:
+        print(f"[WARN] {name} failed to load with compile=False: {e2}")
+
+    # Attempt 3: swap Keras implementation (legacy <-> native) and retry.
+    # This handles the case where the .keras file was saved in the *other*
+    # format than the one currently forced by TF_USE_LEGACY_KERAS.
+    try:
+        import importlib
+        was_legacy = os.environ.get("TF_USE_LEGACY_KERAS") == "1"
+        if was_legacy:
+            os.environ.pop("TF_USE_LEGACY_KERAS", None)
+        else:
+            os.environ["TF_USE_LEGACY_KERAS"] = "1"
+
+        import tensorflow as tf
+        importlib.reload(tf.keras) if hasattr(tf, "keras") else None
+        from tensorflow import keras as keras_alt
+        model = keras_alt.models.load_model(filepath, compile=False)
+
+        # restore original env var so other models load with the original setting
+        if was_legacy:
+            os.environ["TF_USE_LEGACY_KERAS"] = "1"
+        else:
+            os.environ.pop("TF_USE_LEGACY_KERAS", None)
+
+        print(f"[OK] {name} loaded successfully after swapping Keras implementation.")
+        return model
+    except Exception as e3:
+        print(f"[FAIL] {name} could not be loaded with any strategy: {e3}")
+        return None
+
+
 print("Loading models...")
-try:
-    MODELS = {
-        "CNN Scratch": keras.models.load_model(get_model_path("cnn_scratch_cat_breed_final.keras")),
-        "MobileNetV2": keras.models.load_model(get_model_path("mobilenetv2_cat_breed_final.keras")),
-        "ResNet50": keras.models.load_model(get_model_path("resnet50_cat_breed_final.keras")),
-    }
-    print("Models loaded successfully.")
-except Exception as e:
-    print(f"Error loading models: {e}")
-    MODELS = {}
+MODEL_FILES = {
+    "CNN Scratch": "cnn_scratch_cat_breed_final.keras",
+    "MobileNetV2": "mobilenetv2_cat_breed_final.keras",
+    "ResNet50": "resnet50_cat_breed_final.keras",
+}
+
+MODELS = {}
+for model_name, filename in MODEL_FILES.items():
+    try:
+        path = get_model_path(filename)
+        loaded = load_model_safely(model_name, path)
+        if loaded is not None:
+            MODELS[model_name] = loaded
+    except Exception as e:
+        print(f"[FAIL] Unexpected error preparing {model_name}: {e}")
+
+if MODELS:
+    print(f"Finished loading models. Available: {list(MODELS.keys())}")
+else:
+    print("No models could be loaded. /predict will fail until this is fixed.")
 
 # =============================
 # IMAGE PREPROCESS
@@ -93,8 +156,10 @@ def get_classes():
 
 @app.post("/predict")
 async def predict(file: UploadFile = File(...), model_name: str = Form("MobileNetV2")):
+    if not MODELS:
+        return {"error": "No models are currently loaded on the server. Check server logs."}
     if model_name not in MODELS:
-        return {"error": "Invalid model name"}
+        return {"error": f"Invalid model name. Available models: {list(MODELS.keys())}"}
     
     model = MODELS[model_name]
     image_bytes = await file.read()
